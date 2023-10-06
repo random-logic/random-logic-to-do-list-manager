@@ -1,6 +1,6 @@
 'use client'; // Todo: Is this needed?
 
-import React, {MutableRefObject, useEffect, useState} from "react";
+import React, { MutableRefObject, useEffect, useState } from "react";
 import { useRef } from 'react';
 
 type Task = {
@@ -10,8 +10,8 @@ type Task = {
 };
 
 function ToDoList() {
-  const newTaskName : MutableRefObject<any> = useRef(null);
-  const selectCompleted : MutableRefObject<any> = useRef(null);
+  const newTaskName: MutableRefObject<any> = useRef(null);
+  const selectCompleted: MutableRefObject<any> = useRef(null);
 
   const [viewingCompleted, setViewingCompleted] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -69,7 +69,7 @@ function ToDoList() {
   async function addNewTask(name: string) {
     name = name.trim();
 
-    if (name == '') {
+    if (name === '') {
       return;
     }
 
@@ -93,24 +93,49 @@ function ToDoList() {
   }, [viewingCompleted]);
 
   return (
-    <div className="ToDoList">
-      <select ref={selectCompleted} name="filter by"
-              onChange={() => toggleCompleted(selectCompleted.current.value == 'completed')}>
-        <option value="to do">To do</option>
-        <option value="completed">Completed</option>
-      </select>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white rounded p-4 shadow-md">
+        <select
+          ref={selectCompleted}
+          name="filter by"
+          className="mb-4 p-2 border border-gray-300 rounded"
+          onChange={() => toggleCompleted(selectCompleted.current.value === 'completed')}
+        >
+          <option value="to do">To do</option>
+          <option value="completed">Completed</option>
+        </select>
 
-      <ul>
-        {tasks.map(task =>
-          <li key={task._id}>
-            {task.name}
-            <button onClick={() => updateTaskCompleted(task._id, !task.completed)}>Toggle Completed</button>
-            <button onClick={() => deleteTask(task._id)}>Delete</button>
-          </li>
-        )}
-      </ul>
-      <input type="text" ref={newTaskName}></input>
-      <button onClick={() => addNewTask(newTaskName.current.value)}>Add New Task</button>
+        <ul>
+          {tasks.map(task =>
+            <li key={task._id} className="flex items-center justify-between border-b border-gray-300 py-2">
+              <button
+                onClick={() => updateTaskCompleted(task._id, !task.completed)}
+                className={`px-2 py-1 ${task.completed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} rounded`}
+              >
+                Toggle Completed
+              </button>
+              {task.name}
+              <button
+                onClick={() => deleteTask(task._id)}
+                className="px-2 py-1 bg-red-500 text-white rounded"
+              >
+                Delete
+              </button>
+            </li>
+          )}
+        </ul>
+        <input
+          type="text"
+          ref={newTaskName}
+          className="mt-4 p-2 border border-gray-300 rounded"
+        ></input>
+        <button
+          onClick={() => addNewTask(newTaskName.current.value)}
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Add New Task
+        </button>
+      </div>
     </div>
   )
 }
@@ -118,7 +143,7 @@ function ToDoList() {
 export default function Home() {
   return (
     <div className="App">
-      <header className="App-header">
+      <header className="App-header text-2xl font-bold bg-blue-500 text-white p-4">
         To do List
       </header>
       {ToDoList()}
