@@ -2,6 +2,7 @@
 
 import React, { MutableRefObject, useEffect, useState } from "react";
 import { useRef } from 'react';
+import { CheckBoxOutlineBlank, CheckBox, Delete, Add } from '@mui/icons-material';
 
 type Task = {
   _id: string,
@@ -108,18 +109,23 @@ function ToDoList() {
         <ul>
           {tasks.map(task =>
             <li key={task._id} className="flex items-center justify-between border-b border-gray-300 py-2">
-              <button
-                onClick={() => updateTaskCompleted(task._id, !task.completed)}
-                className={`px-2 py-1 ${task.completed ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} rounded`}
-              >
-                Toggle Completed
+              <button>
+                {
+                  task.completed ?
+                    <CheckBox onClick={() => updateTaskCompleted(task._id, !task.completed)}
+                              className="h-5 w-5 text-blue-500 border-2 border-blue-500 rounded-md focus:ring-2 focus:ring-blue-200"
+                    /> :
+                    <CheckBoxOutlineBlank onClick={() => updateTaskCompleted(task._id, !task.completed)}
+                                          className="h-5 w-5 text-blue-500 border-2 border-blue-500 rounded-md focus:ring-2 focus:ring-blue-200"
+                    />
+                }
               </button>
               {task.name}
               <button
                 onClick={() => deleteTask(task._id)}
                 className="px-2 py-1 bg-red-500 text-white rounded"
               >
-                Delete
+                <Delete />
               </button>
             </li>
           )}
@@ -133,7 +139,7 @@ function ToDoList() {
           onClick={() => addNewTask(newTaskName.current.value)}
           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
         >
-          Add New Task
+          <Add />
         </button>
       </div>
     </div>
