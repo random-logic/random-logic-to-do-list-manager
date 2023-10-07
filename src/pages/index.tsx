@@ -309,7 +309,7 @@ export default function Home() {
       {isSignedIn ? <ToDoList uuid={uuid} />
         : <div className="backGround">
             <div className="whiteFloatyThingInTheCenter">
-              Please sign in on top right corner
+              Please sign in (using Google) on top right corner
             </div>
           </div>
       }
