@@ -11,7 +11,7 @@ type Task = {
   completed: boolean
 };
 
-function TaskView(props: { task: Task, onClickCheckbox: () => Promise<void>, onClickDel: () => Promise<void> }) {
+function TaskView(props: { displaySnackbar: (msg: string) => void, task: Task, onClickCheckbox: () => Promise<void>, onClickDel: () => Promise<void> }) {
   const editField : MutableRefObject<any> = useRef(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -20,7 +20,7 @@ function TaskView(props: { task: Task, onClickCheckbox: () => Promise<void>, onC
   async function updateTaskName(newName: string) {
     newName = newName.trim();
 
-    await fetch('/api/updToDo', {
+    const res = await fetch('/api/updToDo', {
       method: 'PATCH',
       body: JSON.stringify({
         id: props.task._id,
@@ -30,8 +30,14 @@ function TaskView(props: { task: Task, onClickCheckbox: () => Promise<void>, onC
       })
     });
 
-    setName(newName);
-    setIsEditing(false);
+    if (res.status != 200) {
+      props.displaySnackbar(`${res.status} ${res.statusText}`);
+    }
+    else {
+      setName(newName);
+      setIsEditing(false);
+      props.displaySnackbar(`Task edited successfully`);
+    }
   }
 
   function cancelEdit() {
@@ -85,8 +91,9 @@ function ToDoList() {
   const [viewingCompleted, setViewingCompleted] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // State to manage the snackbar
+  // States to manage the snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   async function updateTasksView() {
     const res = await fetch(`/api/getToDo?completed=${viewingCompleted}`);
@@ -95,23 +102,24 @@ function ToDoList() {
   }
 
   async function deleteTask(_id: string) {
-    await fetch('/api/delToDo', {
+    const res = await fetch('/api/delToDo', {
       method: 'DELETE',
       body: JSON.stringify({
         id: _id
       })
     });
 
-    // Show the snackbar
-    setSnackbarOpen(true);
-
-    await updateTasksView();
+    if (res.status != 200) {
+      displaySnackbar(`${res.status} ${res.statusText}`);
+    }
+    else {
+      await updateTasksView();
+      displaySnackbar("Tasks deleted successfully!");
+    }
   }
 
   async function updateTaskCompleted(_id: string, completed: boolean) {
-    _id = _id.trim();
-
-    await fetch('/api/updToDo', {
+    const res = await fetch('/api/updToDo', {
       method: 'PATCH',
       body: JSON.stringify({
         id: _id,
@@ -121,20 +129,24 @@ function ToDoList() {
       })
     });
 
-    // Show the snackbar
-    setSnackbarOpen(true);
-
-    await updateTasksView();
+    if (res.status != 200) {
+      displaySnackbar(`${res.status} ${res.statusText}`);
+    }
+    else {
+      await updateTasksView();
+      displaySnackbar("Tasks updated successfully!");
+    }
   }
 
   async function addNewTask(name: string) {
     name = name.trim();
 
     if (name === '') {
+      displaySnackbar("Invalid task name");
       return;
     }
 
-    await fetch('/api/addToDo', {
+    const res = await fetch('/api/addToDo', {
       method: 'POST',
       body: JSON.stringify([{
         name: name,
@@ -142,14 +154,22 @@ function ToDoList() {
       }])
     });
 
-    // Show the snackbar
-    setSnackbarOpen(true);
-
-    await updateTasksView();
+    if (res.status != 200) {
+      displaySnackbar(`${res.status} ${res.statusText}`);
+    }
+    else {
+      await updateTasksView();
+      displaySnackbar("Tasks added successfully!");
+    }
   }
 
   async function toggleCompleted(completed: boolean) {
     setViewingCompleted(completed);
+  }
+
+  function displaySnackbar(msg: string) {
+    setSnackbarMessage(msg);
+    setSnackbarOpen(true);
   }
 
   useEffect(() => {
@@ -176,6 +196,7 @@ function ToDoList() {
         <ul>
           {tasks.map(task =>
             <TaskView
+              displaySnackbar={displaySnackbar}
               key={task._id}
               task={task}
               onClickCheckbox={() => updateTaskCompleted(task._id, !task.completed)}
@@ -183,23 +204,28 @@ function ToDoList() {
             />
           )}
         </ul>
-        <input
-          type="text"
-          ref={newTaskName}
-          className="textBox"
-        />
-        <button
-          onClick={() => addNewTask(newTaskName.current.value)}
-          className="addNewTask"
-        >
-          <Add />
-        </button>
+        {!viewingCompleted ?
+          <>
+            <input
+              type="text"
+              ref={newTaskName}
+              className="textBox"
+            />
+            <button
+              onClick={() => addNewTask(newTaskName.current.value)}
+              className="addNewTask"
+            >
+              <Add />
+            </button>
+          </>
+          : <></>
+        }
       </div>
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000} // Adjust the duration as needed
         onClose={handleCloseSnackbar}
-        message="Task updated successfully!"
+        message={snackbarMessage}
         action={
           <>
             <IconButton
