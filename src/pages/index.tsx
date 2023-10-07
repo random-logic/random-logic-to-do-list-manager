@@ -168,6 +168,7 @@ function ToDoList() {
   }
 
   function displaySnackbar(msg: string) {
+    console.log(msg);
     setSnackbarMessage(msg);
     setSnackbarOpen(true);
   }

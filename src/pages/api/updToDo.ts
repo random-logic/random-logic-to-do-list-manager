@@ -2,6 +2,10 @@ import { MongoClient, ObjectId } from 'mongodb'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method != 'PATCH') {
+    res.status(400).json(new Error('Only PATCH requests are valid here'));
+  }
+
   const uri =
     "mongodb+srv://admin:1234@cluster0.itt5rhj.mongodb.net/?retryWrites=true&w=majority";
 
