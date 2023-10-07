@@ -41,6 +41,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const findQuery = {
     completed : {
       $eq: req.query.completed == 'true'
+    },
+    uuid : {
+      $eq: req.query.uuid
     }
   };
 
