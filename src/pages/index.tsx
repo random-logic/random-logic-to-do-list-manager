@@ -2,13 +2,80 @@
 
 import React, { MutableRefObject, useEffect, useState } from "react";
 import { useRef } from 'react';
-import { CheckBoxOutlineBlank, CheckBox, Delete, Add } from '@mui/icons-material';
+import { CheckBoxOutlineBlank, CheckBox, Delete, Add, Edit, Close, Check } from '@mui/icons-material';
 
 type Task = {
   _id: string,
   name: string,
   completed: boolean
 };
+
+function TaskView(props: { task: Task, onClickCheckbox: () => Promise<void>, onClickDel: () => Promise<void> }) {
+  const editField : MutableRefObject<any> = useRef(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(props.task.name);
+
+  async function updateTaskName(newName: string) {
+    newName = newName.trim();
+
+    await fetch('/api/updToDo', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        id: props.task._id,
+        set: {
+          name: newName
+        }
+      })
+    });
+
+    setName(newName);
+    setIsEditing(false);
+  }
+
+  function cancelEdit() {
+    setIsEditing(false);
+  }
+
+  function startEditing() {
+    setIsEditing(true);
+  }
+
+  return <li className="taskView">
+    <button>
+      {
+        props.task.completed ?
+          <CheckBox onClick={props.onClickCheckbox} className="checkBox" /> :
+          <CheckBoxOutlineBlank onClick={props.onClickCheckbox} className="checkBox" />
+      }
+    </button>
+    {isEditing ? <input ref={editField} type="text" className="textBox" placeholder={name}></input> : name}
+    <section>
+      {isEditing ?
+        <>
+          <button onClick={() => updateTaskName(editField.current.value)}>
+            <Check />
+          </button>
+          <button onClick={cancelEdit}>
+            <Close />
+          </button>
+        </> :
+        <>
+          <button
+            onClick={startEditing}
+          >
+            <Edit />
+          </button>
+          <button
+            onClick={props.onClickDel}
+          >
+            <Delete/>
+          </button>
+        </>
+      }
+    </section>
+  </li>;
+}
 
 function ToDoList() {
   const newTaskName: MutableRefObject<any> = useRef(null);
@@ -28,23 +95,6 @@ function ToDoList() {
       method: 'DELETE',
       body: JSON.stringify({
         id: _id
-      })
-    });
-
-    await updateTasksView();
-  }
-
-  async function updateTaskName(_id: string, newName: string) {
-    _id = _id.trim();
-    newName = newName.trim();
-
-    await fetch('/api/updToDo', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        id: _id,
-        set: {
-          name: newName
-        }
       })
     });
 
@@ -94,12 +144,11 @@ function ToDoList() {
   }, [viewingCompleted]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-md mx-auto bg-white rounded p-4 shadow-md">
+    <div className="backGround">
+      <div className="todoList">
         <select
           ref={selectCompleted}
-          name="filter by"
-          className="mb-4 p-2 border border-gray-300 rounded"
+          className="filterBy"
           onChange={() => toggleCompleted(selectCompleted.current.value === 'completed')}
         >
           <option value="to do">To do</option>
@@ -108,36 +157,18 @@ function ToDoList() {
 
         <ul>
           {tasks.map(task =>
-            <li key={task._id} className="flex items-center justify-between border-b border-gray-300 py-2">
-              <button>
-                {
-                  task.completed ?
-                    <CheckBox onClick={() => updateTaskCompleted(task._id, !task.completed)}
-                              className="h-5 w-5 text-blue-500 border-2 border-blue-500 rounded-md focus:ring-2 focus:ring-blue-200"
-                    /> :
-                    <CheckBoxOutlineBlank onClick={() => updateTaskCompleted(task._id, !task.completed)}
-                                          className="h-5 w-5 text-blue-500 border-2 border-blue-500 rounded-md focus:ring-2 focus:ring-blue-200"
-                    />
-                }
-              </button>
-              {task.name}
-              <button
-                onClick={() => deleteTask(task._id)}
-                className="px-2 py-1 bg-red-500 text-white rounded"
-              >
-                <Delete />
-              </button>
-            </li>
+            <TaskView key={task._id} task={task} onClickCheckbox={() => updateTaskCompleted(task._id, !task.completed)}
+                      onClickDel={() => deleteTask(task._id)}/>
           )}
         </ul>
         <input
           type="text"
           ref={newTaskName}
-          className="mt-4 p-2 border border-gray-300 rounded"
-        ></input>
+          className="textBox"
+        />
         <button
           onClick={() => addNewTask(newTaskName.current.value)}
-          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+          className="addNewTask"
         >
           <Add />
         </button>
@@ -149,7 +180,7 @@ function ToDoList() {
 export default function Home() {
   return (
     <div className="App">
-      <header className="App-header text-2xl font-bold bg-blue-500 text-white p-4">
+      <header className="homeHeader">
         To do List
       </header>
       {ToDoList()}
