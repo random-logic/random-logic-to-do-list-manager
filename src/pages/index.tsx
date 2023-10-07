@@ -3,6 +3,7 @@
 import React, { MutableRefObject, useEffect, useState } from "react";
 import { useRef } from 'react';
 import { CheckBoxOutlineBlank, CheckBox, Delete, Add, Edit, Close, Check } from '@mui/icons-material';
+import {IconButton, Snackbar} from "@mui/material";
 
 type Task = {
   _id: string,
@@ -84,6 +85,9 @@ function ToDoList() {
   const [viewingCompleted, setViewingCompleted] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  // State to manage the snackbar
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   async function updateTasksView() {
     const res = await fetch(`/api/getToDo?completed=${viewingCompleted}`);
     const data = await res.json();
@@ -97,6 +101,9 @@ function ToDoList() {
         id: _id
       })
     });
+
+    // Show the snackbar
+    setSnackbarOpen(true);
 
     await updateTasksView();
   }
@@ -113,6 +120,9 @@ function ToDoList() {
         }
       })
     });
+
+    // Show the snackbar
+    setSnackbarOpen(true);
 
     await updateTasksView();
   }
@@ -132,6 +142,9 @@ function ToDoList() {
       }])
     });
 
+    // Show the snackbar
+    setSnackbarOpen(true);
+
     await updateTasksView();
   }
 
@@ -142,6 +155,11 @@ function ToDoList() {
   useEffect(() => {
     updateTasksView().catch(console.error);
   }, [viewingCompleted]);
+
+  // Close the snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
 
   return (
     <div className="backGround">
@@ -157,8 +175,12 @@ function ToDoList() {
 
         <ul>
           {tasks.map(task =>
-            <TaskView key={task._id} task={task} onClickCheckbox={() => updateTaskCompleted(task._id, !task.completed)}
-                      onClickDel={() => deleteTask(task._id)}/>
+            <TaskView
+              key={task._id}
+              task={task}
+              onClickCheckbox={() => updateTaskCompleted(task._id, !task.completed)}
+              onClickDel={() => deleteTask(task._id)}
+            />
           )}
         </ul>
         <input
@@ -173,6 +195,24 @@ function ToDoList() {
           <Add />
         </button>
       </div>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000} // Adjust the duration as needed
+        onClose={handleCloseSnackbar}
+        message="Task updated successfully!"
+        action={
+          <>
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={handleCloseSnackbar}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </>
+        }
+      />
     </div>
   )
 }
