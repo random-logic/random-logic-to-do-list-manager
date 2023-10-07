@@ -264,7 +264,7 @@ export default function Home() {
     appId: "1:459576284129:web:265e9699c61cc00c41b8a0",
     measurementId: "G-4VGR2DR2XW"
   };
-  //const app = initializeApp(firebaseConfig);
+  /*const app = */initializeApp(firebaseConfig);
   const auth = getAuth();
 
   async function homeSignIn() {
