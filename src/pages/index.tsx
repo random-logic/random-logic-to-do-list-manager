@@ -5,6 +5,9 @@ import { useRef } from 'react';
 import { CheckBoxOutlineBlank, CheckBox, Delete, Add, Edit, Close, Check } from '@mui/icons-material';
 import {IconButton, Snackbar} from "@mui/material";
 
+import {getAuth, signInWithPopup, GoogleAuthProvider, signOut} from "firebase/auth";
+import { initializeApp } from 'firebase/app';
+
 type Task = {
   _id: string,
   name: string,
@@ -84,7 +87,9 @@ function TaskView(props: { displaySnackbar: (msg: string) => void, task: Task, o
   </li>;
 }
 
-function ToDoList() {
+function ToDoList(props : {uuid : string}) {
+  const uuid = props.uuid;
+
   const newTaskName: MutableRefObject<any> = useRef(null);
   const selectCompleted: MutableRefObject<any> = useRef(null);
 
@@ -96,7 +101,7 @@ function ToDoList() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   async function updateTasksView() {
-    const res = await fetch(`/api/getToDo?completed=${viewingCompleted}`);
+    const res = await fetch(`/api/getToDo?completed=${viewingCompleted}&uuid=${uuid}`);
     const data = await res.json();
     setTasks(data);
   }
@@ -150,7 +155,8 @@ function ToDoList() {
       method: 'POST',
       body: JSON.stringify([{
         name: name,
-        completed: false
+        completed: false,
+        uuid: uuid
       }])
     });
 
@@ -184,7 +190,7 @@ function ToDoList() {
 
   return (
     <div className="backGround">
-      <div className="todoList">
+      <div className="whiteFloatyThingInTheCenter">
         <select
           ref={selectCompleted}
           className="filterBy"
@@ -245,12 +251,68 @@ function ToDoList() {
 }
 
 export default function Home() {
+  const [isSignedIn, setSignedIn] = useState(false);
+  const [uuid, setUuid] = useState('');
+
+  const provider = new GoogleAuthProvider();
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbXfTcvVh3pVIyyuwcZc51BC-92nL1S3g",
+    authDomain: "to-do-list-manager-efc56.firebaseapp.com",
+    projectId: "to-do-list-manager-efc56",
+    storageBucket: "to-do-list-manager-efc56.appspot.com",
+    messagingSenderId: "459576284129",
+    appId: "1:459576284129:web:265e9699c61cc00c41b8a0",
+    measurementId: "G-4VGR2DR2XW"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+
+  async function homeSignIn() {
+    try {
+      const result = await signInWithPopup(auth, provider)
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      //const credential = GoogleAuthProvider.credentialFromResult(result);
+      //const token = credential?.accessToken;
+      // The signed-in user info.
+      const user = result.user;
+      // IdP data available using getAdditionalUserInfo(result)
+      // ...
+
+      setUuid(user.uid);
+      setSignedIn(true);
+    }
+    catch(error : any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      alert(`${errorCode} ${errorMessage}`);
+    }
+  }
+
+  async function homeSignOut() {
+    try {
+      await signOut(auth);
+      setSignedIn(false);
+      setUuid("");
+      alert('Sign out success');
+    }
+    catch (e : any) {
+      alert(e.toString());
+    }
+  }
+
   return (
     <div className="App">
-      <header className="homeHeader">
-        To do List
+      <header className="homeHeader flex justify-between">
+        <span>To do List</span>
+        <button onClick={!isSignedIn ? homeSignIn : homeSignOut}>{!isSignedIn ? "Sign in" : "Sign out"}</button>
       </header>
-      {ToDoList()}
+      {isSignedIn ? <ToDoList uuid={uuid} />
+        : <div className="backGround">
+            <div className="whiteFloatyThingInTheCenter">
+              Please sign in on top right corner
+            </div>
+          </div>
+      }
     </div>
   );
 }
